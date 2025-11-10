@@ -29,45 +29,72 @@ class MockMethodChannel extends Mock implements MethodChannel {
       final dataTypeKey = (arguments as Map)['dataTypeKey'];
       switch (dataTypeKey) {
         case 'HEART_RATE':
-          return Future.value(<Map<String, dynamic>>[
-            {
-              'uuid': 'test-uuid-1',
-              'value': 75.5,
-              'date_from': DateTime(2024, 9, 24, 12, 0).millisecondsSinceEpoch,
-              'date_to': DateTime(2024, 9, 24, 12, 0).millisecondsSinceEpoch,
-              'source_id': 'com.apple.Health',
-              'source_name': 'Health',
-              'recording_method': 2, // automatic
-              'metadata': {
-                'HKDeviceName': 'Apple Watch',
-                'HKExternalUUID': '123e4567-e89b-12d3-a456-426614174000',
-                'recording_method': 2,
-              }
-            }
-          ] as T);
+          return Future.value(
+            <Map<String, dynamic>>[
+                  {
+                    'uuid': 'test-uuid-1',
+                    'value': 75.5,
+                    'date_from': DateTime(
+                      2024,
+                      9,
+                      24,
+                      12,
+                      0,
+                    ).millisecondsSinceEpoch,
+                    'date_to': DateTime(
+                      2024,
+                      9,
+                      24,
+                      12,
+                      0,
+                    ).millisecondsSinceEpoch,
+                    'source_id': 'com.apple.Health',
+                    'source_name': 'Health',
+                    'recording_method': 2, // automatic
+                    'metadata': {
+                      'HKDeviceName': 'Apple Watch',
+                      'HKExternalUUID': '123e4567-e89b-12d3-a456-426614174000',
+                      'recording_method': 2,
+                    },
+                  },
+                ]
+                as T,
+          );
         case 'WORKOUT':
-           return Future.value(<Map<String, dynamic>>[
-            {
-              'uuid': 'test-uuid-2',
-              'workoutActivityType': 'RUNNING',
-              'totalEnergyBurned': 200.0,
-              'totalEnergyBurnedUnit': 'KILOCALORIE',
-              'totalDistance': 5000.0,
-              'totalDistanceUnit': 'METER',
-              'date_from': DateTime(2024, 9, 24, 12, 0).millisecondsSinceEpoch,
-              'date_to': DateTime(2024, 9, 24, 13, 0).millisecondsSinceEpoch,
-              'source_id': 'com.apple.Health',
-              'source_name': 'Health',
-              'recording_method': 2,
-              'metadata': {
-                'HKDeviceName': 'Apple Watch',
-                'complex': {
-                  'key': 'value',
-                  'number': 42,
-                },
-              }
-            }
-          ] as T);
+          return Future.value(
+            <Map<String, dynamic>>[
+                  {
+                    'uuid': 'test-uuid-2',
+                    'workoutActivityType': 'RUNNING',
+                    'totalEnergyBurned': 200.0,
+                    'totalEnergyBurnedUnit': 'KILOCALORIE',
+                    'totalDistance': 5000.0,
+                    'totalDistanceUnit': 'METER',
+                    'date_from': DateTime(
+                      2024,
+                      9,
+                      24,
+                      12,
+                      0,
+                    ).millisecondsSinceEpoch,
+                    'date_to': DateTime(
+                      2024,
+                      9,
+                      24,
+                      13,
+                      0,
+                    ).millisecondsSinceEpoch,
+                    'source_id': 'com.apple.Health',
+                    'source_name': 'Health',
+                    'recording_method': 2,
+                    'metadata': {
+                      'HKDeviceName': 'Apple Watch',
+                      'complex': {'key': 'value', 'number': 42},
+                    },
+                  },
+                ]
+                as T,
+          );
         case 'WORKOUT_ROUTE':
           return Future.value(
             <Map<String, dynamic>>[
@@ -77,7 +104,13 @@ class MockMethodChannel extends Mock implements MethodChannel {
                       {
                         'latitude': 37.334900,
                         'longitude': -122.009020,
-                        'timestamp': DateTime(2024, 9, 24, 12, 0).toUtc().millisecondsSinceEpoch,
+                        'timestamp': DateTime(
+                          2024,
+                          9,
+                          24,
+                          12,
+                          0,
+                        ).toUtc().millisecondsSinceEpoch,
                         'horizontalAccuracy': 5.0,
                         'verticalAccuracy': 8.0,
                         'speed': 1.4,
@@ -88,15 +121,33 @@ class MockMethodChannel extends Mock implements MethodChannel {
                       {
                         'latitude': 37.335280,
                         'longitude': -122.008430,
-                        'timestamp': DateTime(2024, 9, 24, 12, 2).toUtc().millisecondsSinceEpoch,
+                        'timestamp': DateTime(
+                          2024,
+                          9,
+                          24,
+                          12,
+                          2,
+                        ).toUtc().millisecondsSinceEpoch,
                         'horizontalAccuracy': 5.0,
                         'verticalAccuracy': 8.0,
                         'speed': 1.6,
                         'course': 120.0,
                       },
                     ],
-                    'date_from': DateTime(2024, 9, 24, 12, 0).millisecondsSinceEpoch,
-                    'date_to': DateTime(2024, 9, 24, 12, 30).millisecondsSinceEpoch,
+                    'date_from': DateTime(
+                      2024,
+                      9,
+                      24,
+                      12,
+                      0,
+                    ).millisecondsSinceEpoch,
+                    'date_to': DateTime(
+                      2024,
+                      9,
+                      24,
+                      12,
+                      30,
+                    ).millisecondsSinceEpoch,
                     'source_id': 'com.apple.Health',
                     'source_name': 'Health',
                     'recording_method': 2,
@@ -110,7 +161,8 @@ class MockMethodChannel extends Mock implements MethodChannel {
                 as T,
           );
         case 'NUTRITION':
-          return Future.value(<Map<String, dynamic>>[
+          return Future.value(
+            <Map<String, dynamic>>[
                   {
                     'uuid': 'test-uuid-3',
                     'name': 'Lunch',
@@ -118,17 +170,31 @@ class MockMethodChannel extends Mock implements MethodChannel {
                     'calories': 500.0,
                     'carbs': 60.0,
                     'protein': 20.0,
-                    'date_from': DateTime(2024, 9, 24, 13, 0).millisecondsSinceEpoch,
-                    'date_to': DateTime(2024, 9, 24, 13, 30).millisecondsSinceEpoch,
+                    'date_from': DateTime(
+                      2024,
+                      9,
+                      24,
+                      13,
+                      0,
+                    ).millisecondsSinceEpoch,
+                    'date_to': DateTime(
+                      2024,
+                      9,
+                      24,
+                      13,
+                      30,
+                    ).millisecondsSinceEpoch,
                     'source_id': 'com.apple.Health',
                     'source_name': 'Health',
                     'recording_method': 2,
                     'metadata': {
                       'HKFoodMeal': 'LUNCH',
                       'array': [1, 'test', false, 'DateTime.now()'],
-                    }
-                  }
-                ] as T);
+                    },
+                  },
+                ]
+                as T,
+          );
         default:
           return Future.value(<Map<String, dynamic>>[] as T);
       }
@@ -164,7 +230,10 @@ void main() {
   setUp(() {
     // Use the updated method to set the mock handler
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (call) => mockChannel.invokeMethod(call.method, call.arguments));
+        .setMockMethodCallHandler(
+          channel,
+          (call) => mockChannel.invokeMethod(call.method, call.arguments),
+        );
   });
 
   tearDown(() {
@@ -211,15 +280,15 @@ void main() {
       expect(hdp.type, HealthDataType.WORKOUT);
       expect(hdp.metadata, {
         'HKDeviceName': 'Apple Watch',
-        'complex': {
-          'key': 'value',
-          'number': 42,
-        },
+        'complex': {'key': 'value', 'number': 42},
         // 'unsupported' should be filtered out
       });
       expect(hdp.value, isA<WorkoutHealthValue>());
       final workoutValue = hdp.value as WorkoutHealthValue;
-      expect(workoutValue.workoutActivityType, HealthWorkoutActivityType.RUNNING);
+      expect(
+        workoutValue.workoutActivityType,
+        HealthWorkoutActivityType.RUNNING,
+      );
       expect(workoutValue.totalEnergyBurned, 200);
       expect(workoutValue.totalDistance, 5000);
     });
@@ -236,7 +305,12 @@ void main() {
       expect(hdp.type, HealthDataType.NUTRITION);
       expect(hdp.metadata, {
         'HKFoodMeal': 'LUNCH',
-        'array': [1, 'test', false, 'DateTime.now()'], // 'DateTime.now()' should be filtered out
+        'array': [
+          1,
+          'test',
+          false,
+          'DateTime.now()',
+        ], // 'DateTime.now()' should be filtered out
       });
       expect(hdp.value, isA<NutritionHealthValue>());
       final nutritionValue = hdp.value as NutritionHealthValue;
@@ -280,14 +354,6 @@ void main() {
     });
 
     test('startWorkoutRoute returns builder identifier', () async {
-      if (!Platform.isIOS) {
-        await expectLater(
-          () => health.startWorkoutRoute(),
-          throwsA(isA<UnsupportedError>()),
-        );
-        return;
-      }
-
       final builderId = await health.startWorkoutRoute();
       expect(builderId, 'builder-123');
       expect(mockChannel.lastMethod, 'startWorkoutRoute');
@@ -295,23 +361,6 @@ void main() {
     });
 
     test('insertWorkoutRouteData serializes locations correctly', () async {
-      if (!Platform.isIOS) {
-        await expectLater(
-          () => health.insertWorkoutRouteData(
-            builderId: 'builder-123',
-            locations: [
-              WorkoutRouteLocation(
-                latitude: 0,
-                longitude: 0,
-                timestamp: DateTime.now(),
-              ),
-            ],
-          ),
-          throwsA(isA<UnsupportedError>()),
-        );
-        return;
-      }
-
       final builderId = 'builder-123';
       final start = DateTime(2024, 9, 24, 12, 0).toLocal();
       final locations = [
@@ -336,10 +385,12 @@ void main() {
 
       expect(success, isTrue);
       expect(mockChannel.lastMethod, 'insertWorkoutRouteData');
-      final args = mockChannel.lastArguments as Map<String, dynamic>;
+      final args = Map<String, dynamic>.from(mockChannel.lastArguments as Map);
       expect(args['builderId'], builderId);
       expect(args['locations'], hasLength(1));
-      final serialized = args['locations'][0] as Map<String, dynamic>;
+      final serialized = Map<String, dynamic>.from(
+        (args['locations'] as List).first as Map,
+      );
       expect(serialized['latitude'], 37.0);
       expect(serialized['longitude'], -122.0);
       expect(serialized['altitude'], 15);
@@ -353,17 +404,6 @@ void main() {
     });
 
     test('finishWorkoutRoute returns route uuid', () async {
-      if (!Platform.isIOS) {
-        await expectLater(
-          () => health.finishWorkoutRoute(
-            builderId: 'builder-123',
-            workoutUuid: 'workout-uuid-1',
-          ),
-          throwsA(isA<UnsupportedError>()),
-        );
-        return;
-      }
-
       final routeUuid = await health.finishWorkoutRoute(
         builderId: 'builder-123',
         workoutUuid: 'workout-uuid-1',
@@ -372,29 +412,18 @@ void main() {
 
       expect(routeUuid, 'route-uuid-123');
       expect(mockChannel.lastMethod, 'finishWorkoutRoute');
-      final args = mockChannel.lastArguments as Map<String, dynamic>;
+      final args = Map<String, dynamic>.from(mockChannel.lastArguments as Map);
       expect(args['builderId'], 'builder-123');
       expect(args['workoutUUID'], 'workout-uuid-1');
-      expect(args['metadata'], {
-        'note': 'example',
-        'workout_uuid': 'workout-uuid-1',
-      });
+      expect(args['metadata'], {'note': 'example'});
     });
 
     test('discardWorkoutRoute returns true', () async {
-      if (!Platform.isIOS) {
-        await expectLater(
-          () => health.discardWorkoutRoute('builder-123'),
-          throwsA(isA<UnsupportedError>()),
-        );
-        return;
-      }
-
       final success = await health.discardWorkoutRoute('builder-123');
 
       expect(success, isTrue);
       expect(mockChannel.lastMethod, 'discardWorkoutRoute');
-      final args = mockChannel.lastArguments as Map<String, dynamic>;
+      final args = Map<String, dynamic>.from(mockChannel.lastArguments as Map);
       expect(args['builderId'], 'builder-123');
     });
   });

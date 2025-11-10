@@ -121,7 +121,10 @@ class Health {
         : permissions.map((permission) => permission.index).toList();
 
     /// On Android, if BMI is requested, then also ask for weight and height
-    if (Platform.isAndroid) _handleBMI(mTypes, mPermissions);
+    if (Platform.isAndroid) {
+      _handleBMI(mTypes, mPermissions);
+      _handleWorkoutRoute(mTypes, mPermissions);
+    }
 
     return await _channel.invokeMethod('hasPermissions', {
       "types": mTypes.map((type) => type.name).toList(),
@@ -405,7 +408,10 @@ class Health {
         : permissions.map((permission) => permission.index).toList();
 
     // on Android, if BMI is requested, then also ask for weight and height
-    if (Platform.isAndroid) _handleBMI(mTypes, mPermissions);
+    if (Platform.isAndroid) {
+      _handleBMI(mTypes, mPermissions);
+      _handleWorkoutRoute(mTypes, mPermissions);
+    }
 
     List<String> keys = mTypes.map((e) => e.name).toList();
     final bool? isAuthorized = await _channel.invokeMethod(
@@ -430,6 +436,22 @@ class Health {
       }
       mTypes.remove(HealthDataType.BODY_MASS_INDEX);
       mPermissions.removeAt(index);
+    }
+  }
+
+  /// Ensures workout permission is requested whenever workout routes are requested on Android.
+  void _handleWorkoutRoute(
+    List<HealthDataType> mTypes,
+    List<int> mPermissions,
+  ) {
+    final index = mTypes.indexOf(HealthDataType.WORKOUT_ROUTE);
+    if (index == -1) {
+      return;
+    }
+
+    if (!mTypes.contains(HealthDataType.WORKOUT)) {
+      mTypes.add(HealthDataType.WORKOUT);
+      mPermissions.add(mPermissions[index]);
     }
   }
 
@@ -1544,17 +1566,12 @@ class Health {
     return await _channel.invokeMethod('writeWorkoutData', args) == true;
   }
 
-  /// Start a new workout route recording session on iOS.
+  /// Start a new workout route recording session on iOS or Android.
   ///
   /// Returns a builder identifier that must be supplied in subsequent calls
   /// to [insertWorkoutRouteData], [finishWorkoutRoute], or
   /// [discardWorkoutRoute].
-  ///
-  /// Throws [UnsupportedError] on non-iOS platforms.
   Future<String> startWorkoutRoute() async {
-    if (!Platform.isIOS) {
-      throw UnsupportedError('Workout route writing is supported on iOS only.');
-    }
     final identifier = await _channel.invokeMethod<String>('startWorkoutRoute');
     if (identifier == null) {
       throw PlatformException(
@@ -1569,15 +1586,10 @@ class Health {
   ///
   /// The [builderId] must come from [startWorkoutRoute]. Locations should
   /// be ordered by ascending timestamp to mirror HealthKit’s expectations.
-  ///
-  /// Throws [UnsupportedError] on non-iOS platforms.
   Future<bool> insertWorkoutRouteData({
     required String builderId,
     required List<WorkoutRouteLocation> locations,
   }) async {
-    if (!Platform.isIOS) {
-      throw UnsupportedError('Workout route writing is supported on iOS only.');
-    }
     final args = <String, dynamic>{
       'builderId': builderId,
       'locations': locations
@@ -1590,7 +1602,7 @@ class Health {
 
   /// Finalises the workout route and associates it with an existing workout.
   ///
-  /// Provide the [builderId] from [startWorkoutRoute], the HealthKit
+  /// Provide the [builderId] from [startWorkoutRoute], the platform-specific
   /// [workoutUuid] (as returned from [writeWorkoutData] or another mechanism),
   /// and optional [metadata] that will be stored on the resulting route.
   ///
@@ -1600,9 +1612,6 @@ class Health {
     required String workoutUuid,
     Map<String, dynamic>? metadata,
   }) async {
-    if (!Platform.isIOS) {
-      throw UnsupportedError('Workout route writing is supported on iOS only.');
-    }
     final args = <String, dynamic>{
       'builderId': builderId,
       'workoutUUID': workoutUuid,
@@ -1626,9 +1635,6 @@ class Health {
   ///
   /// Returns `true` if the builder existed and was discarded successfully.
   Future<bool> discardWorkoutRoute(String builderId) async {
-    if (!Platform.isIOS) {
-      throw UnsupportedError('Workout route writing is supported on iOS only.');
-    }
     final args = <String, dynamic>{'builderId': builderId};
     return await _channel.invokeMethod<bool>('discardWorkoutRoute', args) ==
         true;

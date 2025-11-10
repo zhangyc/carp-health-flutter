@@ -60,6 +60,7 @@ object HealthConstants {
 
     // Activity type
     const val WORKOUT = "WORKOUT"
+    const val WORKOUT_ROUTE = "WORKOUT_ROUTE"
 
     /**
      * Maps Flutter health data type strings to their corresponding Health Connect Record classes.
@@ -238,4 +239,7 @@ object HealthConstants {
         "YOGA" to ExerciseSessionRecord.EXERCISE_TYPE_YOGA,
         "OTHER" to ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT,
     )
+
+    val workoutTypeReverseMap: Map<Int, String> =
+        workoutTypeMap.entries.associate { (key, value) -> value to key }
 }

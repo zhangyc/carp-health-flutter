@@ -10,7 +10,7 @@ The plugin supports:
 - reading health data using the `getHealthDataFromTypes` method.
 - writing health data using the `writeHealthData` method.
 - writing workouts using the `writeWorkout` method.
-- writing workout routes on iOS using the `startWorkoutRoute` / `insertWorkoutRouteData` / `finishWorkoutRoute` methods.
+- writing workout routes on iOS and Android using the `startWorkoutRoute` / `insertWorkoutRouteData` / `finishWorkoutRoute` methods.
 - writing meals on iOS (Apple Health) & Android using the `writeMeal` method.
 - writing audiograms on iOS using the `writeAudiogram` method.
 - writing blood pressure data using the `writeBloodPressure` method.
@@ -206,13 +206,21 @@ Below is a simplified flow of how to use the plugin.
   int? steps = await health.getTotalStepsInInterval(midnight, now);
 ```
 
-### Writing workout routes (iOS)
+### Writing workout routes (iOS & Android)
 
 1. Request share/read permissions for both `HealthDataType.WORKOUT` and `HealthDataType.WORKOUT_ROUTE`, and ensure Core Location permissions are granted.
 2. When the workout session starts, open a builder with `final builderId = await health.startWorkoutRoute();`.
 3. Collect GPS samples using `CLLocationManager` (or an equivalent service) and periodically push ordered batches of `WorkoutRouteLocation` values via `insertWorkoutRouteData`.
 4. Save the workout itself (for example, with `writeWorkoutData`) and capture the resulting HealthKit workout UUID.
 5. Call `finishWorkoutRoute(builderId: builderId, workoutUuid: workoutUuid, metadata: {...})` to commit the route, or `discardWorkoutRoute(builderId)` if the session is cancelled.
+
+> **Health Connect note:** Android only surfaces routes while your app is in the foreground, and
+> other apps' routes may return a `ConsentRequired` flag. When that happens, prompt the user to
+> grant access via the Health Connect UI before retrying the read. Also remember to declare
+> both `<uses-permission android:name="android.permission.health.READ_EXERCISE_ROUTE"/>` (or
+> `...READ_EXERCISE_ROUTES`, depending on your Health Connect SDK) and
+> `<uses-permission android:name="android.permission.health.WRITE_EXERCISE_ROUTE"/>` in your Android
+> manifest.
 
 ### Health Data
 
@@ -428,7 +436,7 @@ The plugin supports the following [`HealthDataType`](https://pub.dev/documentati
 | WATER                        | LITER                   | yes              | yes                       |                                                                                                                                    |
 | EXERCISE_TIME                | MINUTES                 | yes              |                           |                                                                                                                                    |
 | WORKOUT                      | NO_UNIT                 | yes              | yes                       | See table below                                                                                                                    |
-| WORKOUT_ROUTE                | NO_UNIT                 | yes              |                           | iOS 11+. Read/write via workout route builder APIs; not available on Google Health Connect.                                        |
+| WORKOUT_ROUTE                | NO_UNIT                 | yes              | yes                       | iOS 11+ and Android (as Exercise Route); use the workout route builder APIs described below.                                       |
 | HIGH_HEART_RATE_EVENT        | NO_UNIT                 | yes              |                           | Requires Apple Watch to write the data                                                                                             |
 | LOW_HEART_RATE_EVENT         | NO_UNIT                 | yes              |                           | Requires Apple Watch to write the data                                                                                             |
 | IRREGULAR_HEART_RATE_EVENT   | NO_UNIT                 | yes              |                           | Requires Apple Watch to write the data                                                                                             |
