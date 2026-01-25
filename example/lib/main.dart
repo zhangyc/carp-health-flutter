@@ -343,6 +343,15 @@ class HealthAppState extends State<HealthApp> {
       endTime: now,
     );
 
+    if (Platform.isAndroid) {
+      success &= await health.writeActivityIntensity(
+        intensityLevel: ActivityIntensityLevel.moderate,
+        startTime: earlier,
+        endTime: now,
+        recordingMethod: RecordingMethod.manual,
+      );
+    }
+
     // specialized write methods
     success &= await health.writeBloodOxygen(
       saturation: 98,
@@ -473,14 +482,6 @@ class HealthAppState extends State<HealthApp> {
         endTime: now,
       );
 
-      // Mindfulness value should be counted based on start and end time
-      success &= await health.writeHealthData(
-        value: 10,
-        type: HealthDataType.MINDFULNESS,
-        startTime: earlier,
-        endTime: now,
-        recordingMethod: RecordingMethod.automatic,
-      );
     }
 
     // Available on iOS or iOS 16.0+ only
@@ -506,6 +507,15 @@ class HealthAppState extends State<HealthApp> {
         startTime: earlier,
         endTime: now,
         recordingMethod: RecordingMethod.manual,
+      );
+
+       // Mindfulness value should be counted based on start and end time
+      success &= await health.writeHealthData(
+        value: 10,
+        type: HealthDataType.MINDFULNESS,
+        startTime: earlier,
+        endTime: now,
+        recordingMethod: RecordingMethod.automatic,
       );
     }
 

@@ -75,6 +75,13 @@ An example of asking for permission to read and write heart rate data is shown b
 <uses-permission android:name="android.permission.health.WRITE_HEART_RATE"/>
 ```
 
+If you plan to read or write Activity Intensity records (the `HealthDataType.ACTIVITY_INTENSITY` type), be sure to add the corresponding Health Connect permissions introduced with that data type:
+
+```xml
+<uses-permission android:name="android.permission.health.READ_ACTIVITY_INTENSITY"/>
+<uses-permission android:name="android.permission.health.WRITE_ACTIVITY_INTENSITY"/>
+```
+
 By default, Health Connect restricts read data to 30 days from when permission has been granted.
 
 You can check and request access to historical data using the `isHealthDataHistoryAuthorized` and `requestHealthDataHistoryAuthorization` methods, respectively.

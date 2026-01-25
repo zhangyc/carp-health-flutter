@@ -171,6 +171,47 @@ class HealthDataWriter(
         }
     }
 
+        fun writeActivityIntensity(call: MethodCall, result: Result) {
+                val intensityType = call.argument<Int>("intensityType")!!
+                val startTime = Instant.ofEpochMilli(call.argument<Long>("startTime")!!)
+                val endTime = Instant.ofEpochMilli(call.argument<Long>("endTime")!!)
+                val recordingMethod = call.argument<Int>("recordingMethod")!!
+                val clientRecordId: String? = call.argument("clientRecordId")
+                val clientRecordVersion: Double? = call.argument<Double>("clientRecordVersion")
+                val deviceType: Int? = call.argument<Int>("deviceType")
+
+                val metadata: Metadata = buildMetadata(
+                        recordingMethod = recordingMethod,
+                        clientRecordId = clientRecordId,
+                        clientRecordVersion = clientRecordVersion?.toLong(),
+                        deviceType = deviceType,
+                )
+
+                scope.launch {
+                        try {
+                                val record = ActivityIntensityRecord(
+                                        startTime = startTime,
+                                        startZoneOffset = null,
+                                        endTime = endTime,
+                                        endZoneOffset = null,
+                                        activityIntensityType = intensityType,
+                                        metadata = metadata,
+                                )
+                                healthConnectClient.insertRecords(listOf(record))
+                                result.success(true)
+                                Log.i("FLUTTER_HEALTH::SUCCESS", "[Health Connect] Activity intensity was successfully added!")
+                        } catch (e: Exception) {
+                                Log.e(
+                                                "FLUTTER_HEALTH::ERROR",
+                                                "[Health Connect] There was an error adding the activity intensity record"
+                                )
+                                Log.e("FLUTTER_HEALTH::ERROR", e.message ?: "unknown error")
+                                Log.e("FLUTTER_HEALTH::ERROR", e.stackTraceToString())
+                                result.success(false)
+                        }
+                }
+        }
+
     /**
      * Writes a comprehensive workout session with optional distance and calorie data. Creates an
      * ExerciseSessionRecord with associated DistanceRecord and TotalCaloriesBurnedRecord if
@@ -809,6 +850,10 @@ class HealthDataWriter(
                 Log.e("FLUTTER_HEALTH::ERROR", "You must use the [writeMeal] API")
                 null
             }
+                        ACTIVITY_INTENSITY -> {
+                                Log.e("FLUTTER_HEALTH::ERROR", "You must use the [writeActivityIntensity] API")
+                                null
+                        }
             else -> {
                 Log.e(
                         "FLUTTER_HEALTH::ERROR",
@@ -879,6 +924,7 @@ class HealthDataWriter(
         private const val WORKOUT = "WORKOUT"
         private const val NUTRITION = "NUTRITION"
         private const val SPEED = "SPEED"
+        private const val ACTIVITY_INTENSITY = "ACTIVITY_INTENSITY"
 
         // Recording method mapping expected from Flutter side
         private const val RECORDING_METHOD_UNKNOWN = 0

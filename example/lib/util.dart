@@ -108,4 +108,5 @@ const List<HealthDataType> dataTypesAndroid = [
   HealthDataType.NUTRITION,
   HealthDataType.TOTAL_CALORIES_BURNED,
   HealthDataType.MENSTRUATION_FLOW,
+  HealthDataType.ACTIVITY_INTENSITY,
 ];

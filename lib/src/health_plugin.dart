@@ -24,7 +24,7 @@ part of '../health.dart';
 ///  * Reading total step counts using the [getTotalStepsInInterval] method.
 ///  * Writing different types of specialized health data like the [writeWorkoutData],
 ///    [writeBloodPressure], [writeBloodOxygen], [writeAudiogram], [writeMeal],
-///    [writeMenstruationFlow], [writeInsulinDelivery] methods.
+///    [writeMenstruationFlow], [writeInsulinDelivery], [writeActivityIntensity] methods.
 ///
 /// On **Android**, this plugin relies on the Google Health Connect (GHC) SDK.
 /// Since Health Connect is not installed on SDK level < 34, the plugin has a
@@ -490,6 +490,9 @@ class Health {
     if (type == HealthDataType.WORKOUT) {
       throw ArgumentError("Adding workouts should be done using the writeWorkoutData method.");
     }
+    if (type == HealthDataType.ACTIVITY_INTENSITY) {
+      throw ArgumentError("Adding activity intensity data should be done using the writeActivityIntensity method.");
+    }
     // If not implemented on platform, throw an exception
     if (!isDataTypeAvailable(type)) {
       throw HealthException(type, 'Not available on platform $platformType');
@@ -538,6 +541,46 @@ class Health {
       'clientRecordVersion': clientRecordVersion,
     };
     bool? success = await _channel.invokeMethod('writeData', args);
+    return success ?? false;
+  }
+
+  /// Writes an [ActivityIntensityRecord] to Google Health Connect.
+  ///
+  /// This API is Android only.
+  Future<bool> writeActivityIntensity({
+    required ActivityIntensityLevel intensityLevel,
+    required DateTime startTime,
+    DateTime? endTime,
+    RecordingMethod recordingMethod = RecordingMethod.automatic,
+    String? clientRecordId,
+    double? clientRecordVersion,
+  }) async {
+    if (!Platform.isAndroid) {
+      throw UnsupportedError('writeActivityIntensity is only available on Android');
+    }
+
+    await _checkIfHealthConnectAvailableOnAndroid();
+
+    endTime ??= startTime;
+    if (startTime.isAfter(endTime)) {
+      throw ArgumentError("startTime must be equal or earlier than endTime");
+    }
+
+    final intensityValue = intensityLevel.toAndroidValue();
+    if (intensityValue == -1) {
+      throw ArgumentError('Unknown activity intensity level provided.');
+    }
+
+    Map<String, dynamic> args = {
+      'intensityType': intensityValue,
+      'startTime': startTime.millisecondsSinceEpoch,
+      'endTime': endTime.millisecondsSinceEpoch,
+      'recordingMethod': recordingMethod.toInt(),
+      'clientRecordId': clientRecordId,
+      'clientRecordVersion': clientRecordVersion,
+    };
+
+    final bool? success = await _channel.invokeMethod('writeActivityIntensity', args);
     return success ?? false;
   }
 

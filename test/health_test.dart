@@ -13,6 +13,34 @@ void main() {
     setUpAll(() async {
       await health.configure();
     });
+    test('Test ActivityIntensityHealthValue', () {
+      final json = {
+        "uuid": "some-uuid-activity",
+        "value": {"__type": "ActivityIntensityHealthValue", "intensityLevel": "moderate", "minutes": 12.5},
+        "type": "ACTIVITY_INTENSITY",
+        "unit": "MINUTE",
+        "dateFrom": "2024-09-24T17:34:00.000",
+        "dateTo": "2024-09-24T17:46:30.000",
+        "sourcePlatform": "googleHealthConnect",
+        "sourceDeviceId": "device-activity",
+        "sourceId": "source-id",
+        "sourceName": "source-name",
+        "recordingMethod": "automatic",
+      };
+
+      final hdp = HealthDataPoint.fromJson(json);
+
+      expect(hdp.uuid, "some-uuid-activity");
+      expect(hdp.type, HealthDataType.ACTIVITY_INTENSITY);
+      expect(hdp.unit, HealthDataUnit.MINUTE);
+      expect(hdp.value, isA<ActivityIntensityHealthValue>());
+
+      final value = hdp.value as ActivityIntensityHealthValue;
+      expect(value.intensityLevel, ActivityIntensityLevel.moderate);
+      expect(value.minutes, 12.5);
+
+      expect(toJsonString(hdp), isA<String>());
+    });
     test('Test WorkoutHealthValue', () async {
       var entry = {
         "uuid": "A91A2F10-3D7B-486A-B140-5ADCD3C9C6D0",
