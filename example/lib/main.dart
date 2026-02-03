@@ -7,6 +7,26 @@ import 'package:health_example/util.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:carp_serializable/carp_serializable.dart';
 
+class _ChangesSummary {
+  final int beforeCount;
+  final int afterCount;
+  final int inserted;
+  final int updated;
+  final int removed;
+  final int appliedUpserts;
+  final int appliedDeletes;
+
+  const _ChangesSummary({
+    required this.beforeCount,
+    required this.afterCount,
+    required this.inserted,
+    required this.updated,
+    required this.removed,
+    required this.appliedUpserts,
+    required this.appliedDeletes,
+  });
+}
+
 // Global Health instance
 final health = Health();
 
@@ -35,6 +55,8 @@ enum AppState {
   PERMISSIONS_REVOKING,
   PERMISSIONS_REVOKED,
   PERMISSIONS_NOT_REVOKED,
+  CHANGES_READY,
+  CHANGES_NOT_READY,
 }
 
 class HealthAppState extends State<HealthApp> {
@@ -42,6 +64,24 @@ class HealthAppState extends State<HealthApp> {
   AppState _state = AppState.DATA_NOT_FETCHED;
   int _nofSteps = 0;
   List<RecordingMethod> recordingMethodsToFilter = [];
+  String? _changesToken;
+  String? _previousChangesToken;
+  bool _changesTokenExpired = false;
+  bool _changesHasMore = false;
+  final List<HealthChange> _changes = [];
+  final List<HealthDataType> _changeTypes = const [
+    HealthDataType.STEPS,
+    HealthDataType.WORKOUT,
+  ];
+  final Map<String, HealthDataPoint> _syncedDataById = {};
+  int _lastBeforeCount = 0;
+  int _lastAfterCount = 0;
+  int _lastInserted = 0;
+  int _lastUpdated = 0;
+  int _lastRemoved = 0;
+  int _lastAppliedUpserts = 0;
+  int _lastAppliedDeletes = 0;
+  DateTime? _lastChangesAt;
 
   // All types available depending on platform (iOS ot Android).
   List<HealthDataType> get types => (Platform.isAndroid)
@@ -164,6 +204,116 @@ class HealthAppState extends State<HealthApp> {
       );
       _state = AppState.HEALTH_CONNECT_STATUS;
     });
+  }
+
+  /// Create a change token for Health Connect incremental sync.
+  Future<void> createChangesToken() async {
+    if (!Platform.isAndroid) {
+      setState(() => _state = AppState.CHANGES_NOT_READY);
+      return;
+    }
+
+    try {
+      final token = await health.getChangesToken(types: _changeTypes);
+      setState(() {
+        _changesToken = token;
+        _changesTokenExpired = false;
+        _changesHasMore = false;
+        _changes.clear();
+        _state = token == null ? AppState.CHANGES_NOT_READY : AppState.CHANGES_READY;
+      });
+    } catch (error) {
+      debugPrint("Exception in createChangesToken: $error");
+      setState(() => _state = AppState.CHANGES_NOT_READY);
+    }
+  }
+
+  /// Fetch the next page of changes using the current token.
+  Future<void> fetchChanges() async {
+    if (!Platform.isAndroid) {
+      setState(() => _state = AppState.CHANGES_NOT_READY);
+      return;
+    }
+
+    final token = _changesToken;
+    if (token == null || token.isEmpty) {
+      setState(() => _state = AppState.CHANGES_NOT_READY);
+      return;
+    }
+
+    try {
+      final response = await health.getChanges(changesToken: token);
+      if (response == null) {
+        setState(() => _state = AppState.CHANGES_NOT_READY);
+        return;
+      }
+
+      final summary = _applyChanges(response.changes);
+
+      setState(() {
+        _previousChangesToken = token;
+        _changesToken = response.nextChangesToken;
+        _changesTokenExpired = response.changesTokenExpired;
+        _changesHasMore = response.hasMore;
+        _changes.addAll(response.changes);
+        _lastBeforeCount = summary.beforeCount;
+        _lastAfterCount = summary.afterCount;
+        _lastInserted = summary.inserted;
+        _lastUpdated = summary.updated;
+        _lastRemoved = summary.removed;
+        _lastAppliedUpserts = summary.appliedUpserts;
+        _lastAppliedDeletes = summary.appliedDeletes;
+        _lastChangesAt = DateTime.now();
+        _state = AppState.CHANGES_READY;
+      });
+    } catch (error) {
+      debugPrint("Exception in fetchChanges: $error");
+      setState(() => _state = AppState.CHANGES_NOT_READY);
+    }
+  }
+
+  _ChangesSummary _applyChanges(List<HealthChange> changes) {
+    final beforeCount = _syncedDataById.length;
+    int inserted = 0;
+    int updated = 0;
+    int removed = 0;
+    int appliedUpserts = 0;
+    int appliedDeletes = 0;
+
+    for (final change in changes) {
+      if (change.type == HealthChangeType.delete) {
+        appliedDeletes += 1;
+        final recordId = change.recordId;
+        if (recordId != null && _syncedDataById.remove(recordId) != null) {
+          removed += 1;
+        }
+        continue;
+      }
+
+      appliedUpserts += 1;
+      final dataPoint = change.dataPoint;
+      if (dataPoint == null || dataPoint.uuid.isEmpty) {
+        continue;
+      }
+
+      final existing = _syncedDataById[dataPoint.uuid];
+      _syncedDataById[dataPoint.uuid] = dataPoint;
+      if (existing == null) {
+        inserted += 1;
+      } else if (existing != dataPoint) {
+        updated += 1;
+      }
+    }
+
+    return _ChangesSummary(
+      beforeCount: beforeCount,
+      afterCount: _syncedDataById.length,
+      inserted: inserted,
+      updated: updated,
+      removed: removed,
+      appliedUpserts: appliedUpserts,
+      appliedDeletes: appliedDeletes,
+    );
   }
 
   /// Fetch data points from the health plugin and show them in the app.
@@ -885,6 +1035,32 @@ class HealthAppState extends State<HealthApp> {
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
+                      if (Platform.isAndroid)
+                        TextButton(
+                          onPressed: createChangesToken,
+                          style: const ButtonStyle(
+                            backgroundColor: WidgetStatePropertyAll(
+                              Colors.blue,
+                            ),
+                          ),
+                          child: const Text(
+                            "Create Changes Token",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      if (Platform.isAndroid)
+                        TextButton(
+                          onPressed: fetchChanges,
+                          style: const ButtonStyle(
+                            backgroundColor: WidgetStatePropertyAll(
+                              Colors.blue,
+                            ),
+                          ),
+                          child: const Text(
+                            "Get Changes",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
                       TextButton(
                         onPressed: addData,
                         style: const ButtonStyle(
@@ -1170,6 +1346,66 @@ class HealthAppState extends State<HealthApp> {
 
   Widget get _stepsFetched => Text('Total number of steps: $_nofSteps.');
 
+  Widget get _contentChangesReady {
+    final token = _changesToken;
+    final tokenPreview = token == null
+        ? 'none'
+        : (token.length > 12 ? '${token.substring(0, 12)}...' : token);
+    final previousToken = _previousChangesToken;
+    final previousPreview = previousToken == null
+        ? 'none'
+        : (previousToken.length > 12
+            ? '${previousToken.substring(0, 12)}...'
+            : previousToken);
+    final lastChangesAt = _lastChangesAt;
+
+    return ListView.builder(
+      itemCount: _changes.length + 1,
+      itemBuilder: (_, index) {
+        if (index == 0) {
+          return ListTile(
+            title: const Text('Health Connect Changes'),
+            subtitle: Text(
+              'prevToken: $previousPreview\n'
+              'nextToken: $tokenPreview\n'
+              'hasMore: $_changesHasMore | tokenExpired: $_changesTokenExpired\n'
+              'applied upserts: $_lastAppliedUpserts | applied deletes: $_lastAppliedDeletes\n'
+              'inserted: $_lastInserted | updated: $_lastUpdated | removed: $_lastRemoved\n'
+              'store count: $_lastBeforeCount -> $_lastAfterCount\n'
+              'last pull: ${lastChangesAt ?? "never"}',
+            ),
+          );
+        }
+
+        final change = _changes[index - 1];
+        if (change.type == HealthChangeType.delete) {
+          return ListTile(
+            title: const Text('Delete'),
+            subtitle: Text('recordId: ${change.recordId ?? "unknown"}'),
+          );
+        }
+
+        final dataPoint = change.dataPoint;
+        if (dataPoint == null) {
+          return ListTile(
+            title: Text('Upsert ${change.dataType?.name ?? "UNKNOWN"}'),
+            subtitle: const Text('No data point decoded.'),
+          );
+        }
+
+        return ListTile(
+          title: Text('${dataPoint.typeString}: ${dataPoint.value}'),
+          trailing: Text(dataPoint.unitString),
+          subtitle: Text('${dataPoint.dateFrom} - ${dataPoint.dateTo}'),
+        );
+      },
+    );
+  }
+
+  final Widget _contentChangesNotReady = const Text(
+    'No change token yet. Tap "Create Changes Token" after authorization.',
+  );
+
   final Widget _dataNotAdded = const Text(
     'Failed to add data.\nDo you have permissions to add data?',
   );
@@ -1192,6 +1428,8 @@ class HealthAppState extends State<HealthApp> {
     AppState.PERMISSIONS_REVOKING => _permissionsRevoking,
     AppState.PERMISSIONS_REVOKED => _permissionsRevoked,
     AppState.PERMISSIONS_NOT_REVOKED => _permissionsNotRevoked,
+    AppState.CHANGES_READY => _contentChangesReady,
+    AppState.CHANGES_NOT_READY => _contentChangesNotReady,
   };
 
   Widget _detailedBottomSheet({HealthDataPoint? healthPoint}) {
