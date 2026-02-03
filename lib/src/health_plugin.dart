@@ -402,6 +402,27 @@ class Health {
     }
   }
 
+  List<HealthDataType> _normalizeTypesForChanges(List<HealthDataType> types) {
+    final normalized = List<HealthDataType>.from(types, growable: true);
+
+    final bmiIndex = normalized.indexOf(HealthDataType.BODY_MASS_INDEX);
+    if (bmiIndex != -1) {
+      normalized.removeAt(bmiIndex);
+      if (!normalized.contains(HealthDataType.WEIGHT)) {
+        normalized.add(HealthDataType.WEIGHT);
+      }
+      if (!normalized.contains(HealthDataType.HEIGHT)) {
+        normalized.add(HealthDataType.HEIGHT);
+      }
+    }
+
+    if (normalized.contains(HealthDataType.WORKOUT_ROUTE) && !normalized.contains(HealthDataType.WORKOUT)) {
+      normalized.add(HealthDataType.WORKOUT);
+    }
+
+    return normalized.toSet().toList();
+  }
+
   /// Calculate the BMI using the last observed height and weight values.
   Future<List<HealthDataPoint>> _computeAndroidBMI(
     DateTime startTime,
@@ -1147,6 +1168,68 @@ class Health {
     dataPoints.addAll(result);
 
     return removeDuplicates(dataPoints);
+  }
+
+  /// Create a Health Connect changes token for the provided [types].
+  ///
+  /// Android only. Returns null on iOS or if an error occurs.
+  Future<String?> getChangesToken({required List<HealthDataType> types}) async {
+    if (Platform.isIOS) return null;
+
+    await _checkIfHealthConnectAvailableOnAndroid();
+    if (types.isEmpty) {
+      throw ArgumentError('The list of [types] must not be empty.');
+    }
+
+    final normalizedTypes = _normalizeTypesForChanges(types);
+    if (normalizedTypes.isEmpty) {
+      throw ArgumentError('No supported types supplied for change token creation.');
+    }
+
+    for (final type in normalizedTypes) {
+      if (!isDataTypeAvailable(type)) {
+        throw HealthException(type, 'Not available on platform $platformType');
+      }
+    }
+
+    try {
+      return await _channel.invokeMethod<String>('getChangesToken', {
+        'types': normalizedTypes.map((type) => type.name).toList(),
+      });
+    } catch (e) {
+      debugPrint('$runtimeType - Exception in getChangesToken(): $e');
+      return null;
+    }
+  }
+
+  /// Fetch the next page of changes for a previously created token.
+  ///
+  /// Android only. Returns null on iOS or if an error occurs.
+  Future<HealthChangesResponse?> getChanges({
+    required String changesToken,
+    bool includeSelf = false,
+  }) async {
+    if (Platform.isIOS) return null;
+
+    await _checkIfHealthConnectAvailableOnAndroid();
+    if (changesToken.isEmpty) {
+      throw ArgumentError('The [changesToken] must not be empty.');
+    }
+
+    try {
+      final response = await _channel.invokeMethod('getChanges', {
+        'changesToken': changesToken,
+        'includeSelf': includeSelf,
+      });
+
+      if (response is Map) {
+        return HealthChangesResponse.fromMethodChannel(response);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('$runtimeType - Exception in getChanges(): $e');
+      return null;
+    }
   }
 
   /// Prepares an interval query, i.e. checks if the types are available, etc.
