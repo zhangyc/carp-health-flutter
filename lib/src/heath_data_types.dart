@@ -224,7 +224,7 @@ const List<HealthDataType> dataTypeKeysIOS = [
   HealthDataType.UNDERWATER_DEPTH,
   HealthDataType.UV_INDEX,
   HealthDataType.TOTAL_CALORIES_BURNED,
-  HealthDataType.WRIST_TEMPERATURE,
+  HealthDataType.SLEEP_WRIST_TEMPERATURE,
 ];
 
 /// List of data types available on Android
@@ -285,7 +285,7 @@ const Map<HealthDataType, HealthDataUnit> dataTypeToUnit = {
   HealthDataType.LEAN_BODY_MASS: HealthDataUnit.KILOGRAM,
   HealthDataType.BODY_MASS_INDEX: HealthDataUnit.NO_UNIT,
   HealthDataType.BODY_TEMPERATURE: HealthDataUnit.DEGREE_CELSIUS,
-  HealthDataType.WRIST_TEMPERATURE: HealthDataUnit.DEGREE_CELSIUS,
+  HealthDataType.SLEEP_WRIST_TEMPERATURE: HealthDataUnit.DEGREE_CELSIUS,
   HealthDataType.BODY_WATER_MASS: HealthDataUnit.KILOGRAM,
   HealthDataType.DIETARY_CARBS_CONSUMED: HealthDataUnit.GRAM,
   HealthDataType.DIETARY_CAFFEINE: HealthDataUnit.GRAM,

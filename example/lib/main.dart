@@ -87,6 +87,7 @@ class HealthAppState extends State<HealthApp> {
               HealthDataType.LOW_HEART_RATE_EVENT,
               HealthDataType.IRREGULAR_HEART_RATE_EVENT,
               HealthDataType.EXERCISE_TIME,
+              HealthDataType.SLEEP_WRIST_TEMPERATURE,
             ].contains(type)
             ? HealthDataAccess.READ
             : HealthDataAccess.READ_WRITE,
